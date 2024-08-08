@@ -55,6 +55,16 @@ const App = () => {
         ));
     };
 
+    const deleteTimer = (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this timer?");
+        if (confirmDelete) {
+            setTimers(timers.filter(timer => timer.id !== id));
+            if (selectedTimerId === id) {
+                setSelectedTimerId(null);
+            }
+        }
+    };
+
     const selectTimer = (id) => {
         setSelectedTimerId(id);
     };
@@ -66,18 +76,44 @@ const App = () => {
             <div style={{ width: '200px', padding: '10px', borderRight: '1px solid #ccc' }}>
                 <h2>Timers</h2>
                 <button onClick={addNewTimer}>Add New Timer</button>
-                <ul>
+                <ul style={{ listStyle: 'none', padding: 0 }}>
                     {timers.map((timer) => (
                         <li
                             key={timer.id}
                             style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '5px 0',
                                 cursor: 'pointer',
-                                textDecoration: timer.isCompleted ? 'line-through' : 'none',
-                                color: timer.isCompleted ? 'gray' : 'black',
                             }}
                             onClick={() => selectTimer(timer.id)}
                         >
-                            {timer.title}
+                            <span
+                                style={{
+                                    textDecoration: timer.isCompleted ? 'line-through' : 'none',
+                                    color: timer.isCompleted ? 'gray' : 'black',
+                                }}
+                            >
+                                {timer.title}
+                            </span>
+                            {timer.isCompleted && (
+                                <button
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'red',
+                                        cursor: 'pointer',
+                                        marginLeft: '10px',
+                                    }}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent triggering the selectTimer function
+                                        deleteTimer(timer.id);
+                                    }}
+                                >
+                                    X
+                                </button>
+                            )}
                         </li>
                     ))}
                 </ul>
