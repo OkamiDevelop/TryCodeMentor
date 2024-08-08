@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
 const CountdownTimer = ({ timer, updateTimer }) => {
-    const [inputHours, setInputHours] = useState(0);
-    const [inputMinutes, setInputMinutes] = useState(0);
-    const [inputSeconds, setInputSeconds] = useState(0);
     const [timeRemaining, setTimeRemaining] = useState(timer.timeRemaining || 0);
     const [isActive, setIsActive] = useState(timer.isActive);
     const [timerTitle, setTimerTitle] = useState(timer.title);
+
+    useEffect(() => {
+        setTimeRemaining(timer.timeRemaining);
+        setIsActive(timer.isActive);
+        setTimerTitle(timer.title);
+    }, [timer]);
 
     useEffect(() => {
         let timerInterval = null;
@@ -16,8 +19,7 @@ const CountdownTimer = ({ timer, updateTimer }) => {
                     if (previousTime <= 1) {
                         clearInterval(timerInterval);
                         const endTime = new Date().toLocaleString();
-                        console.log('Countdown complete!');
-                        updateTimer(timer.id, { isActive: false, isCompleted: true, endTime });
+                        updateTimer(timer.id, { isActive: false, isCompleted: true, endTime, timeRemaining: 0 });
                         return 0;
                     } else {
                         return previousTime - 1;
@@ -30,11 +32,11 @@ const CountdownTimer = ({ timer, updateTimer }) => {
         }
 
         return () => clearInterval(timerInterval);
-    }, [isActive, timeRemaining]);
+    }, [isActive, timeRemaining, timer.id, updateTimer]);
 
     const startTimer = () => {
-        const totalTime = (parseInt(inputHours) * 3600) + (parseInt(inputMinutes) * 60) + parseInt(inputSeconds);
-        setTimeRemaining(totalTime);
+        const totalTime = timeRemaining || 
+            (parseInt(timer.timeRemaining) || (parseInt(timer.hours) * 3600) + (parseInt(timer.minutes) * 60) + parseInt(timer.seconds));
         setIsActive(true);
         updateTimer(timer.id, { timeRemaining: totalTime, isActive: true, title: timerTitle });
     };
@@ -50,16 +52,13 @@ const CountdownTimer = ({ timer, updateTimer }) => {
 
     return (
         <div>
-            {isActive ? (
-                <h2>{timerTitle}</h2>
-            ) : (
-                <input 
-                    type="text" 
-                    value={timerTitle} 
-                    onChange={(e) => setTimerTitle(e.target.value)} 
-                    placeholder="Enter timer title"
-                />
-            )}
+            <input 
+                type="text" 
+                value={timerTitle} 
+                onChange={(e) => setTimerTitle(e.target.value)} 
+                placeholder="Enter timer title"
+                disabled={isActive}
+            />
             {isActive ? (
                 <>
                     <p>{`${hours}h ${minutes}m ${seconds}s`}</p>
@@ -74,26 +73,29 @@ const CountdownTimer = ({ timer, updateTimer }) => {
                 <div>
                     <input
                         type="number"
-                        value={inputHours}
-                        onChange={(e) => setInputHours(e.target.value)}
+                        value={hours}
+                        onChange={(e) => setTimeRemaining((parseInt(e.target.value) * 3600) + (minutes * 60) + seconds)}
                         placeholder="Hours"
                         size={2}
+                        disabled={isActive}
                     />:
                     <input
                         type="number"
-                        value={inputMinutes}
-                        onChange={(e) => setInputMinutes(e.target.value)}
+                        value={minutes}
+                        onChange={(e) => setTimeRemaining((hours * 3600) + (parseInt(e.target.value) * 60) + seconds)}
                         placeholder="Minutes"
                         size={2}
+                        disabled={isActive}
                     />:
                     <input
                         type="number"
-                        value={inputSeconds}
-                        onChange={(e) => setInputSeconds(e.target.value)}
+                        value={seconds}
+                        onChange={(e) => setTimeRemaining((hours * 3600) + (minutes * 60) + parseInt(e.target.value))}
                         placeholder="Seconds"
                         size={2}
+                        disabled={isActive}
                     />
-                    <button onClick={startTimer}>Start Timer</button>
+                    <button onClick={startTimer} disabled={isActive}>Start Timer</button>
                 </div>
             )}
         </div>

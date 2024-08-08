@@ -1,10 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CountdownTimer from './CountdownTimer';
 
 const App = () => {
     const [timers, setTimers] = useState([]);
     const [timerCount, setTimerCount] = useState(0);
     const [selectedTimerId, setSelectedTimerId] = useState(null);
+
+    useEffect(() => {
+        const timerIntervals = timers.map(timer => {
+            if (timer.isActive && timer.timeRemaining > 0) {
+                return setInterval(() => {
+                    setTimers(currentTimers => currentTimers.map(t => {
+                        if (t.id === timer.id) {
+                            const newTimeRemaining = t.timeRemaining - 1;
+                            return {
+                                ...t,
+                                timeRemaining: newTimeRemaining,
+                                isActive: newTimeRemaining > 0,
+                                isCompleted: newTimeRemaining === 0 ? true : t.isCompleted,
+                                endTime: newTimeRemaining === 0 ? new Date().toLocaleString() : t.endTime,
+                            };
+                        }
+                        return t;
+                    }));
+                }, 1000);
+            }
+            return null;
+        });
+
+        return () => {
+            timerIntervals.forEach(interval => {
+                if (interval) clearInterval(interval);
+            });
+        };
+    }, [timers]);
 
     const addNewTimer = () => {
         const newTimer = {
@@ -21,15 +50,16 @@ const App = () => {
     };
 
     const updateTimer = (id, updatedTimer) => {
-        const updatedTimers = timers.map(timer => 
+        setTimers(timers.map(timer =>
             timer.id === id ? { ...timer, ...updatedTimer } : timer
-        );
-        setTimers(updatedTimers);
+        ));
     };
 
     const selectTimer = (id) => {
         setSelectedTimerId(id);
     };
+
+    const selectedTimer = timers.find(timer => timer.id === selectedTimerId);
 
     return (
         <div style={{ display: 'flex' }}>
@@ -38,11 +68,12 @@ const App = () => {
                 <button onClick={addNewTimer}>Add New Timer</button>
                 <ul>
                     {timers.map((timer) => (
-                        <li 
-                            key={timer.id} 
-                            style={{ 
-                                cursor: 'pointer', 
-                                textDecoration: timer.isCompleted ? 'line-through' : 'none' 
+                        <li
+                            key={timer.id}
+                            style={{
+                                cursor: 'pointer',
+                                textDecoration: timer.isCompleted ? 'line-through' : 'none',
+                                color: timer.isCompleted ? 'gray' : 'black',
                             }}
                             onClick={() => selectTimer(timer.id)}
                         >
@@ -52,9 +83,9 @@ const App = () => {
                 </ul>
             </div>
             <div style={{ flex: 1, padding: '20px' }}>
-                {selectedTimerId !== null ? (
+                {selectedTimer ? (
                     <CountdownTimer
-                        timer={timers.find(timer => timer.id === selectedTimerId)}
+                        timer={selectedTimer}
                         updateTimer={updateTimer}
                     />
                 ) : (
